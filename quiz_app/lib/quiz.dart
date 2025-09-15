@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quiz_app/home_page.dart';
 import 'package:quiz_app/questions_screen.dart';
 import 'package:quiz_app/data/questions.dart';
+import 'package:quiz_app/results_screen.dart';
 
 class Quiz extends StatefulWidget {
   const Quiz({super.key});
@@ -34,12 +35,18 @@ class _QuizState extends State<Quiz> {
       // The Questions are Completed
       // Temporarily we Switch to HomePage
 
-      selectedAnswers = []; //Resetting the List
-
       setState(() {
-      activeScreen = HomePage(switchScreen);
+      activeScreen = ResultsScreen(choosenAnswers: selectedAnswers, onRestart: restartQuiz,);
     });
     }
+  }
+
+  void restartQuiz(){
+    
+    selectedAnswers = []; //Resetting the List
+    setState(() {
+      activeScreen = QuestionsScreen(onSelectAnswer: chooseAnswer);
+    });
   }
 
   void switchScreen(){
