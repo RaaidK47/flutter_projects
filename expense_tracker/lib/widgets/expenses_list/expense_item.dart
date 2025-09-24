@@ -12,11 +12,12 @@ class ExpenseItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(expense.title),
-            SizedBox(height: 4),
+            Text(expense.title, style: Theme.of(context).textTheme.titleLarge,),
+            SizedBox(height: 10),
             Row(
               children: [
                 Text('${expense.amount.toStringAsFixed(2)} \$'),
