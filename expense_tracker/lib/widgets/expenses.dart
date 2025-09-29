@@ -32,6 +32,7 @@ class _ExpensesState extends State<Expenses> {
   void _openAddExpenseOverlay() {
     // Addin a Utility Function
     showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
@@ -61,18 +62,26 @@ class _ExpensesState extends State<Expenses> {
       SnackBar(
         content: Text("Expense Deleted!"),
         duration: Duration(seconds: 3),
-        action: SnackBarAction(label: 'Undo', onPressed: () {
-          // Bring back deleted Expense at the same Index
-          setState(() {
-            _registeredExpenses.insert(expenseIndex, expense);
-          });
-        }),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            // Bring back deleted Expense at the same Index
+            setState(() {
+              _registeredExpenses.insert(expenseIndex, expense);
+            });
+          },
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Getting the Width of device the App is running on
+    // These will change if device rotated
+    final width = MediaQuery.of(context).size.width;
+    // build() method is executed again if device is rotated
+
     Widget mainContent = Center(
       child: Text('Ne Expenses Found. Start adding some'),
     );
@@ -91,13 +100,21 @@ class _ExpensesState extends State<Expenses> {
         ],
         title: Text("Flutter Expense Tracker"),
       ),
-      body: Column(
-        children: [
-          Chart(expenses: _registeredExpenses,),
+      body: width < 600
+          ? Column(
+              children: [
+                Chart(expenses: _registeredExpenses),
 
-          Expanded(child: mainContent),
-        ],
-      ),
+                Expanded(child: mainContent),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(child: Chart(expenses: _registeredExpenses)),
+
+                Expanded(child: mainContent),
+              ],
+            ),
     );
   }
 }
