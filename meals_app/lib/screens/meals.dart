@@ -4,18 +4,17 @@ import 'package:meals_app/screens/meal_details.dart';
 import 'package:meals_app/widgets/meal_item.dart';
 
 class MealsScreen extends StatelessWidget {
-  const MealsScreen({super.key, required this.title, required this.meals});
+  const MealsScreen({super.key, this.title, required this.meals, required this.onToggleFavourite});
 
-  final String title;
+  final String? title;
   final List<Meal> meals;
+  final void Function(Meal meal) onToggleFavourite;
 
   // Function to open MealDetailsScreen
   void _selectMeal(BuildContext context, Meal meal) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (ctx) => MealDetailsScreen(meal: meal,),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (ctx) => MealDetailsScreen(onToggleFavourite: onToggleFavourite, meal: meal)));
   }
 
   @override
@@ -24,7 +23,12 @@ class MealsScreen extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: ListView.builder(
         itemCount: meals.length,
-        itemBuilder: (ctx, index) => MealItem(meal: meals[index], onSelectMeal: () {_selectMeal(context, meals[index]);},),
+        itemBuilder: (ctx, index) => MealItem(
+          meal: meals[index],
+          onSelectMeal: () {
+            _selectMeal(context, meals[index]);
+          },
+        ),
       ),
     );
 
@@ -51,9 +55,19 @@ class MealsScreen extends StatelessWidget {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: content,
-    );
+    if (title == null) {
+      // For Favourites Screen
+      // We are not setting Title / AppBar
+      // Appbar is managed in Tabs Screen
+      return content;
+
+    } else {
+      // For Meals (from Categories Screen)
+      // We Set Title / AppBar as per the Meal Categories
+      return Scaffold(
+        appBar: AppBar(title: Text(title!)),
+        body: content,
+      );
+    }
   }
 }
