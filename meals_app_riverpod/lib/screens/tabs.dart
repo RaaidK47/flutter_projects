@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:meals_app/data/dummy_data.dart';
-import 'package:meals_app/models/meal.dart';
+// import 'package:meals_app/data/dummy_data.dart';
+// import 'package:meals_app/models/meal.dart';
+import 'package:meals_app/providers/favourites_provider.dart';
 import 'package:meals_app/screens/categories.dart';
 import 'package:meals_app/screens/filters.dart';
 import 'package:meals_app/screens/meals.dart';
@@ -35,7 +36,7 @@ class _TabsScreenState extends ConsumerState<TabsScreen> {
     });
   }
 
-  final List<Meal> _favouriteMeals = [];
+  // final List<Meal> _favouriteMeals = [];
 
   void _showInfoMessage(String message) {
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -44,22 +45,24 @@ class _TabsScreenState extends ConsumerState<TabsScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _toggleMealFavouriteStatus(Meal meal) {
-    final isExisting = _favouriteMeals.contains(meal);
 
-    if (isExisting == true) {
-      setState(() {
-        _favouriteMeals.remove(meal);
-        _showInfoMessage("Meal is No Longer a Favourite");
-      });
-    } else {
-      setState(() {
-        _favouriteMeals.add(meal);
-        _showInfoMessage("Marked as a Favourite");
-      });
-    }
-    // _favouriteMeals.forEach((meal) => print(meal.title));
-  }
+
+  // void _toggleMealFavouriteStatus(Meal meal) {
+  //   final isExisting = _favouriteMeals.contains(meal);
+
+  //   if (isExisting == true) {
+  //     setState(() {
+  //       _favouriteMeals.remove(meal);
+  //       _showInfoMessage("Meal is No Longer a Favourite");
+  //     });
+  //   } else {
+  //     setState(() {
+  //       _favouriteMeals.add(meal);
+  //       _showInfoMessage("Marked as a Favourite");
+  //     });
+  //   }
+  //   // _favouriteMeals.forEach((meal) => print(meal.title));
+  // }
 
   Future<void> _setScreen(String identifier) async {
     Navigator.of(context).pop(); //Closing Drawer
@@ -98,17 +101,16 @@ class _TabsScreenState extends ConsumerState<TabsScreen> {
     }).toList();
 
     Widget activePage = CategoriesScreen(
-      onToggleFavourite: _toggleMealFavouriteStatus,
+      // onToggleFavourite: _toggleMealFavouriteStatus,
       availableMeals: availableMeals,
     );
     var activePageTitle = "Categories";
 
     if (_selectedPageIndex == 1) {
-      // We are re-using MealsScreen for Favourites
-      // Not Setting the Title
+      final favouriteMeals = ref.watch(favouriteMealsProvider);
       activePage = MealsScreen(
-        onToggleFavourite: _toggleMealFavouriteStatus,
-        meals: _favouriteMeals,
+        // onToggleFavourite: _toggleMealFavouriteStatus,
+        meals: favouriteMeals,
       );
       activePageTitle = "Your Favourites";
     }
