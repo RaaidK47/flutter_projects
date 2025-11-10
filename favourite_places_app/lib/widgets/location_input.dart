@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
+import 'package:http/http.dart' as http;
+
+// For Using Environment Variables
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+// Using json
+import 'dart:convert';
+
+// For using PlaceLocation
+import 'package:favourite_places_app/models/place.dart';
 
 class LocationInput extends StatefulWidget {
   const LocationInput({super.key});
@@ -11,7 +21,18 @@ class LocationInput extends StatefulWidget {
 }
 
 class _LocationInputState extends State<LocationInput> {
-  Location? _pickedLocation;
+  PlaceLocation? _pickedLocation;
+
+  String get locationImage{
+    if (_pickedLocation == null){
+      print("No _pickedLocation Found");
+      return '';
+    }
+    final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'];
+    final lat = _pickedLocation!.latitude;
+    final lng = _pickedLocation!.longitude;
+    return 'https://maps.googleapis.com/maps/api/staticmap?center=$lat,$lng&zoom=16&size=600x300&maptype=roadmap&markers=color:blue%7Clabel:A%7C$lat,$lng&key=$apiKey';
+  }
 
   // To Show Spinner When Getting Location
   var _isGettingLocation = false;
@@ -46,22 +67,52 @@ class _LocationInputState extends State<LocationInput> {
     // Getting the Location
     locationData = await location.getLocation();
 
+    //Converting Location to Human-Readable Address
+    final lat = locationData.latitude;
+    final lng = locationData.longitude;
+
+    if (lat == null || lng == null) {
+      print("Lat or Long is Null");
+      return;
+    }
+
+    // Getting API Key From Environment Variables
+    final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'];
+
+    final url = Uri.parse(
+      'https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey',
+    );
+
+    final response = await http.get(url);
+    final resData = json.decode(response.body);
+
+    final address = resData['results'][0]['formatted_address'];
+    print(address);
+
     setState(() {
+      _pickedLocation = PlaceLocation(
+        latitude: lat,
+        longitude: lng,
+        address: address,
+      );
       _isGettingLocation = false;
     });
-    print(locationData.latitude);
-    print(locationData.longitude);
   }
 
   @override
   Widget build(BuildContext context) {
     Widget previewContent = Text(
-            "No Location Choosen!",
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium!.copyWith(
-              color: Theme.of(context).colorScheme.onBackground,
-            ),
-          );
+      "No Location Choosen!",
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.titleMedium!.copyWith(
+        color: Theme.of(context).colorScheme.onBackground,
+      ),
+    );
+
+    if (_pickedLocation != null) {
+      print("Generating Image");
+      previewContent = Image.network(locationImage, fit: BoxFit.cover, width: double.infinity, height: double.infinity,);
+    }
 
     if (_isGettingLocation == true) {
       previewContent = const CircularProgressIndicator();
@@ -79,7 +130,7 @@ class _LocationInputState extends State<LocationInput> {
               color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
             ),
           ),
-          child: previewContent
+          child: previewContent,
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,

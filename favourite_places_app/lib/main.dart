@@ -4,6 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:favourite_places_app/screens/places.dart';
 
+// For Using Environment Variables
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 final colorScheme = ColorScheme.fromSeed(
   brightness: Brightness.dark,
   seedColor: const Color.fromARGB(255, 102, 6, 247),
@@ -27,7 +30,10 @@ final theme = ThemeData().copyWith(
   ),
 );
 
-void main() {
+Future<void> main() async {
+  // Loading Environment File
+  await dotenv.load(fileName: ".env");
+  
   runApp(
     const ProviderScope(child: MyApp()),
   );
