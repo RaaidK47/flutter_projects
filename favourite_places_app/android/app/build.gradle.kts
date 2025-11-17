@@ -1,3 +1,20 @@
+import java.util.Properties
+
+val dotenv = Properties()
+val projectRootDir = rootProject.projectDir.parentFile
+val dotenvFile = File(projectRootDir, ".env")
+
+println("ENV PATH → " + dotenvFile.absolutePath)
+
+if (dotenvFile.exists()) {
+    println(".env FOUND!")
+    dotenv.load(dotenvFile.inputStream())
+    println("API KEY LOADED → " + dotenv.getProperty("GOOGLE_MAPS_API_KEY"))
+} else {
+    println(".env FILE NOT FOUND!")
+}
+
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -20,6 +37,9 @@ android {
     }
 
     defaultConfig {
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] =
+            dotenv.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
+
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.favourite_places_app"
         // You can update the following values to match your application needs.
