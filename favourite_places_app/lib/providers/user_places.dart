@@ -3,16 +3,85 @@ import 'package:favourite_places_app/models/place.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'dart:io';
 
+import 'package:path_provider/path_provider.dart' as syspath;
+import 'package:path/path.dart' as path;
+
+import 'package:sqflite/sqflite.dart' as sql;
+import 'package:sqflite/sqlite_api.dart';
+
+Future<Database> _getDatabase() async {
+  final dbPath = await sql.getDatabasesPath();
+  // Open Database if exist or Create if not
+  final db = await sql.openDatabase(
+    path.join(dbPath, 'places.db'),
+    //Initial Setup
+    onCreate: (db, version) {
+      // Query run at time of DB creation.
+      return db.execute(
+        'CREATE TABLE user_places(id TEXT PRIMARY KEY, title TEXT, image TEXT, lat REAL, lng REAL, address TEXT)',
+      );
+    },
+    version: 1,
+  );
+  return db;
+}
+
 class UserPlacesNotifier extends StateNotifier<List<Place>> {
   UserPlacesNotifier() : super(const []);
 
-  void addPlace(String title, File image, PlaceLocation location) {
-    final newPlace = Place(title: title, image: image, location: location);
+  Future<void> loadPlaces() async {
+    final db = await _getDatabase();
+
+    // We will get a List of Maps.
+    // Each Map will be one Row of the Database
+    final data = await db.query('user_places');
+
+    // Converting all Rows in DB to a Place Objects
+    final places = data.map(
+      (row) => Place(
+        id: row['id'] as String,
+        title: row['title'] as String,
+        image: File(row['image'] as String),
+        location: PlaceLocation(
+          latitude: row['lat'] as double,
+          longitude: row['lng'] as double,
+          address:row['address'] as String,
+        ),
+      ),
+    ).toList();
+
+    // Setting the State of UserPlacesNotifier
+    state = places;
+  }
+
+  void addPlace(String title, File image, PlaceLocation location) async {
+    // Getting Path to store data (using path_provider)
+    final appDir = await syspath.getApplicationDocumentsDirectory();
+    final filename = path.basename(image.path);
+    final copiedImage = await image.copy('${appDir.path}/$filename');
+
+    final newPlace = Place(
+      title: title,
+      image: copiedImage,
+      location: location,
+    );
+
+    final db = await _getDatabase();
+
+    db.insert('user_places', {
+      'id': newPlace.id,
+      'title': newPlace.title,
+      'image': newPlace.image.path,
+      'lat': newPlace.location.latitude,
+      'lng': newPlace.location.longitude,
+      'address': newPlace.location.address,
+    });
+
     state = [newPlace, ...state];
   }
 }
 
 final userPlacesProvider =
     StateNotifierProvider<UserPlacesNotifier, List<Place>>(
-  (ref) => UserPlacesNotifier(),
-);
+      (ref) => UserPlacesNotifier(),
+    );
