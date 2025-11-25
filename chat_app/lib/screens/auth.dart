@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+final _firebase = FirebaseAuth.instance;
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -18,13 +21,48 @@ class _AuthScreenState extends State<AuthScreen> {
   var _enteredEmail = '';
   var _enteredPassword = '';
 
-  void _submit() {
+  void _submit() async {
     final isValid = _formKey.currentState!.validate();
 
-    if(isValid) {
-      _formKey.currentState!.save();
-      print(_enteredEmail);
-      print(_enteredPassword);
+    if (!isValid) {
+      // Validation failed
+      return;
+    }
+
+    _formKey.currentState!.save();
+
+    if (_isLogin) {
+      // Logic to Log In User
+      try {
+        print("Trying to Log In");
+        print(_enteredEmail);
+        print(_enteredPassword);
+        final userCredentials = await _firebase.signInWithEmailAndPassword(
+          email: _enteredEmail,
+          password: _enteredPassword,
+        );
+      } on FirebaseAuthException catch (error) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message ?? 'Authentication Failed')),
+        );
+      }
+    } else {
+      // Signing-up User
+      try {
+        final userCredentials = await _firebase.createUserWithEmailAndPassword(
+          email: _enteredEmail,
+          password: _enteredPassword,
+        );
+      } on FirebaseAuthException catch (error) {
+        if (error.code == 'email-already in use') {
+          // Handle Exception
+        }
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message ?? 'Authentication Failed')),
+        );
+      }
     }
   }
 
@@ -69,7 +107,9 @@ class _AuthScreenState extends State<AuthScreen> {
                             autocorrect: false,
                             textCapitalization: TextCapitalization.none,
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty || !value.contains('@')){
+                              if (value == null ||
+                                  value.trim().isEmpty ||
+                                  !value.contains('@')) {
                                 return 'Please Enter a Valid Email Address';
                               }
                               return null;
@@ -83,7 +123,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             // Hide the Input
                             obscureText: true,
                             validator: (value) {
-                              if (value == null || value.trim().length < 6 ){
+                              if (value == null || value.trim().length < 6) {
                                 return 'Password must be atleast 6 Characters Long';
                               }
                               return null;
@@ -96,7 +136,9 @@ class _AuthScreenState extends State<AuthScreen> {
                           ElevatedButton(
                             onPressed: _submit,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.primaryContainer
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
                             ),
                             child: Text(_isLogin ? 'Log In' : 'Signup'),
                           ),
@@ -104,7 +146,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             onPressed: () {
                               setState(() {
                                 // Switching _isLogin Variable
-                                _isLogin = !_isLogin; 
+                                _isLogin = !_isLogin;
                                 // _isLogin = _isLogin ? false : true;
                               });
                             },
